@@ -16,10 +16,10 @@ That's the install: the CLI mints a single bearer API key on first boot, prints 
 
 ```
 ┌────────────────────┐       POST /api/items
-│  Claude Routines   ├──────────────────────────┐
-│  / Cowork (cron)   │   Authorization: Bearer  │
-└─────────▲──────────┘                          │
-          │                              ┌──────▼───────┐
+│  Claude Routines   ├───────────────────────────┐
+│  / Cowork (cron)   │   Authorization: Bearer   │
+└─────────▲──────────┘                           │
+          │                               ┌──────▼───────┐
           │ recurring prompt              │              │
           │ (Neuz substitutes URL + key)  │  Neuz (you)  │
 ┌─────────┴──────────┐                    │  Roda+SQLite │
