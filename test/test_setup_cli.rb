@@ -9,15 +9,20 @@ class SetupCLITest < Minitest::Test
     assert_equal raw, File.binread(Neuz::Config.first_boot_key_path)
   end
 
-  def test_banner_includes_key_and_prompts
+  def test_banner_includes_key_and_interview_prompt_only
     raw = Neuz::Setup.prepare!
     out = Neuz::Setup.banner(url: "http://example.local", raw_key: raw)
     assert_includes out, raw
     assert_includes out, "http://example.local"
-    assert_includes out, "INTERVIEW PROMPT"
-    assert_includes out, "RECURRING PROMPT"
+    assert_includes out, "Neuz interview"   # heading inside the interview prompt
+    # The recurring template is inlined into the interview prompt as a
+    # reference for Claude — visible to Claude, but not surfaced as a
+    # separate copy-paste block.
+    assert_includes out, "BEGIN REFERENCE TEMPLATE"
+    assert_includes out, "Neuz curator — recurring run"
     refute_includes out, "{{NEUZ_API_KEY}}"
     refute_includes out, "{{NEUZ_URL}}"
+    refute_includes out, "{{RECURRING_TEMPLATE}}"
   end
 
   def test_banner_without_key_when_acknowledged
@@ -89,7 +94,7 @@ class SetupCLITest < Minitest::Test
                          "prompts", "--key", raw, "--url", "http://x.test"], err: %i[child out], &:read)
     assert_predicate $?, :success?, "bin/neuz prompts --key failed: #{out}"
     assert_includes out, raw
-    assert_includes out, "INTERVIEW PROMPT"
+    assert_includes out, "Neuz interview"
   end
 
   def test_bin_neuz_prompts_with_bad_key_refuses

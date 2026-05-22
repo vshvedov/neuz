@@ -116,17 +116,18 @@ module Neuz
       end
 
       buf << "#{rule}\n"
-      buf << "  Claude prompts (paste into Claude Code)\n"
+      buf << "  Claude prompt (paste into Claude Code)\n"
       buf << "#{rule}\n\n"
 
       if raw_key
-        buf << "  ▼ INTERVIEW PROMPT (one-time — paste into Claude Code):\n\n"
+        buf << "  This is the ONE-TIME interview prompt. Paste it into Claude Code\n"
+        buf << "  and answer the AskUserQuestion sequence. Claude will then print\n"
+        buf << "  a personalized recurring prompt — paste THAT into Claude\n"
+        buf << "  Routines / Cowork on the cadence you want.\n\n"
         Prompts.interview(url: url, api_key: raw_key).each_line { |l| buf << "      #{l}" }
-        buf << "\n\n  ▼ RECURRING PROMPT (paste into Claude Routines/Cowork):\n\n"
-        Prompts.recurring(url: url, api_key: raw_key).each_line { |l| buf << "      #{l}" }
         buf << "\n\n"
       else
-        buf << "  (Run `bin/neuz rotate` first; prompts need a raw key to substitute into.)\n\n"
+        buf << "  (Run `bin/neuz rotate` first; the prompt needs a raw key to substitute into.)\n\n"
       end
       buf << "#{rule}\n"
       buf

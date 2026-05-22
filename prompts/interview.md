@@ -1,9 +1,12 @@
-# Neuz interview — one-time
+
+---------------- BEGINING OF INTERVIEW PROMPT ----------------
 
 You are helping me set up Neuz, my self-hosted personal news dashboard. Neuz lives at:
 
   NEUZ_URL: {{NEUZ_URL}}
   API_KEY:  {{NEUZ_API_KEY}}
+
+This is the ONLY prompt Neuz ships. After this conversation finishes, **you** will print a complete, ready-to-schedule recurring prompt. That prompt is the only thing I'll paste into Claude Routines / Cowork — Neuz does not provide a separate template, so make sure yours stands on its own.
 
 Your job in this single conversation:
 
@@ -20,7 +23,7 @@ Your job in this single conversation:
 
 2. **Synthesize a curator brief.** Once you have my answers, write a short, internal-style "Curator brief" summarizing my profile (3-6 sentences). This is for *you*, the future you that runs the recurring routine — make it specific enough to act on.
 
-3. **Print the recurring prompt** in a fenced code block, ready for me to paste into Claude Routines / Cowork. It MUST:
+3. **Print the recurring prompt** in a fenced code block, ready for me to paste into Claude Routines / Cowork. This is the *complete* prompt for the recurring job — don't refer to "the template" or imply there's a base prompt being extended; the recurring prompt is fully self-contained and lives only in what you emit here. It MUST:
    - Open with the curator brief you synthesized.
    - Instruct the model to use **web search and any other research tools available** to find items matching the brief in the last 24h (or whatever cadence I picked).
    - Apply a strict quality bar: prefer fewer, higher-signal items over filler. Return an empty `items: []` if nothing is worth posting that run — do not fabricate.
@@ -59,4 +62,14 @@ Your job in this single conversation:
    - Never push items older than 7 days.
    - On request failure (non-2xx), surface the response body and stop — do not retry blindly.
 
+6. **Reference template.** Below is the concrete shape your recurring prompt should follow. Match its voice, structure, ordering, and the level of specificity in the JSON example. The only section you *must* rewrite is the `## Curator brief` block — replace the placeholder text with the brief you synthesised in step 2. The numeric guardrails (3–8 items, 12 max, 7-day freshness, retry policy, etc.) are correct as written; don't loosen them. URL and key are already substituted, so the recurring prompt you emit should contain them verbatim too.
+
+   --- BEGIN REFERENCE TEMPLATE ---
+
+{{RECURRING_TEMPLATE}}
+
+   --- END REFERENCE TEMPLATE ---
+
 Begin the interview now using `AskUserQuestion`.
+
+---------------- ENDING OF INTERVIEW PROMPT ----------------

@@ -35,9 +35,9 @@ That's the install: the CLI mints a single bearer API key on first boot, prints 
 ```
 
 1. `docker compose up` boots Neuz. On first boot, it mints a single bearer API key (stored hashed; raw key cached at `data/first_boot_key.txt`, chmod 600 in a 700 dir).
-2. Run `docker compose exec neuz bin/neuz setup` (or locally `bin/neuz setup`). The CLI prints the raw key, the interview prompt, and the recurring prompt - both with your URL and key already substituted.
+2. Run `docker compose exec neuz bin/neuz setup` (or locally `bin/neuz setup`). The CLI prints the raw key and the **interview prompt** (the only prompt Neuz ships), with your URL and key already substituted.
 3. Run `bin/neuz acknowledge` (or pass `--acknowledge` / `-y` to `setup`). Neuz deletes the raw-key file. From here on the raw key only exists wherever you pasted it.
-4. Paste the **interview prompt** into Claude Code. Claude interviews you with `AskUserQuestion` (4-7 questions about interests, sources, cadence, tone) and prints a personalized **recurring prompt**.
+4. Paste the **interview prompt** into Claude Code. Claude interviews you with `AskUserQuestion` (4-7 questions about interests, sources, cadence, tone) and then prints a complete, personalized **recurring prompt** in the chat — that's the prompt you schedule.
 5. Paste the recurring prompt into Claude Routines / Cowork (schedule whatever cadence you like — hourly, daily, etc.).
 6. Each run, Claude does the web research, picks items, dedupes against the trailing 14 days, and POSTs a JSON batch to `/api/items`.
 7. You read at `/` (today) and `/month/YYYY-MM` (calendar) and `/day/YYYY-MM-DD` (a single day).
