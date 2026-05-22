@@ -28,6 +28,15 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    # Cap container log volume so /var/lib/docker doesn't grow unbounded.
+    # Defaults: 3 rotated files × 10 MiB = ~30 MiB max per container.
+    # Tune via NEUZ_LOG_MAX_SIZE (Docker's max-size syntax: "1m","10m","100k")
+    # and NEUZ_LOG_MAX_FILE (integer number of rotated files to keep).
+    logging:
+      driver: json-file
+      options:
+        max-size: "${NEUZ_LOG_MAX_SIZE:-10m}"
+        max-file: "${NEUZ_LOG_MAX_FILE:-3}"
 
 volumes:
   neuz-data:

@@ -14,7 +14,10 @@ class SetupCLITest < Minitest::Test
     out = Neuz::Setup.banner(url: "http://example.local", raw_key: raw)
     assert_includes out, raw
     assert_includes out, "http://example.local"
-    assert_includes out, "Neuz interview"   # heading inside the interview prompt
+    # Stable phrase from the interview prompt body. Don't match the
+    # surrounding "---- BEGINING OF INTERVIEW PROMPT ----" decoration so
+    # cosmetic edits to the framing don't break this test.
+    assert_includes out, "You are helping me set up Neuz"
     # The recurring template is inlined into the interview prompt as a
     # reference for Claude — visible to Claude, but not surfaced as a
     # separate copy-paste block.
@@ -94,7 +97,7 @@ class SetupCLITest < Minitest::Test
                          "prompts", "--key", raw, "--url", "http://x.test"], err: %i[child out], &:read)
     assert_predicate $?, :success?, "bin/neuz prompts --key failed: #{out}"
     assert_includes out, raw
-    assert_includes out, "Neuz interview"
+    assert_includes out, "You are helping me set up Neuz"
   end
 
   def test_bin_neuz_prompts_with_bad_key_refuses

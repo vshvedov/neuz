@@ -126,6 +126,8 @@ All env vars are optional unless noted. Defaults shown.
 | `NEUZ_MMAP_SIZE`              | `67108864`      | SQLite mmap_size pragma              |
 | `NEUZ_WEB_WORKERS`            | `1`             | Puma workers (keep 1 with built-in prune) |
 | `NEUZ_WEB_THREADS_MAX`        | `5`             | Puma threads                         |
+| `NEUZ_LOG_MAX_SIZE`           | `10m`           | Docker `json-file` `max-size` per log file (e.g. `1m`, `100k`) |
+| `NEUZ_LOG_MAX_FILE`           | `3`             | How many rotated log files Docker keeps |
 
 ## Updating
 
@@ -186,6 +188,7 @@ If you've lost the key entirely: `bin/neuz rotate` mints a new one (invalidates 
 - If you must put data on a network share, set `NEUZ_JOURNAL_MODE=DELETE` (slower, but safe).
 - Put a reverse proxy (Caddy, nginx) in front for TLS. Neuz speaks plain HTTP.
 - Backups: just snapshot `/app/data/neuz.db` (plus its `-wal` / `-shm` siblings) while the container is paused.
+- **Logs:** the app writes one common-log line per request plus warnings/errors to stdout/stderr. Docker captures both via its default `json-file` driver. `docker-compose.yml` caps log volume at `NEUZ_LOG_MAX_SIZE` (default `10m`) × `NEUZ_LOG_MAX_FILE` (default `3`), so the running container can hold at most ~30 MiB of rotated logs at a time. Inspect with `docker compose logs neuz` or `docker compose logs -f neuz`. No logrotate / cron config needed — Docker handles rotation.
 
 ## Local development
 
