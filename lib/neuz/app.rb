@@ -108,7 +108,7 @@ module Neuz
       response["Content-Type"] = "application/json"
       items_total = DB.connection[:items].count
       bounds = today_bounds(tz_offset_minutes(request.cookies["tz"]))
-      items_today = DB.connection[:items].where(Sequel.lit("published_at >= ? AND published_at < ?", bounds[0], bounds[1])).count
+      items_today = DB.connection[:items].where(Sequel.lit("created_at >= ? AND created_at < ?", bounds[0], bounds[1])).count
       {
         status: "ok",
         db: DB.healthy? ? "ok" : "error",
@@ -175,10 +175,12 @@ module Neuz
       start_utc = Time.utc(first.year, first.month, first.day) - offset_min * 60
       end_utc = Time.utc(last.year, last.month, last.day) + 86_400 - offset_min * 60
 
+      # Calendar buckets by arrival day (created_at), see comment in
+      # items_in_range above.
       rows = DB.connection[:items]
-        .where(Sequel.lit("published_at >= ? AND published_at < ?", start_utc, end_utc))
-        .select { [Sequel.lit("date(datetime(published_at, ? || ' minutes'))", offset_min.to_s).as(:local_date), Sequel.function(:count).*.as(:count)] }
-        .group(Sequel.lit("date(datetime(published_at, ? || ' minutes'))", offset_min.to_s))
+        .where(Sequel.lit("created_at >= ? AND created_at < ?", start_utc, end_utc))
+        .select { [Sequel.lit("date(datetime(created_at, ? || ' minutes'))", offset_min.to_s).as(:local_date), Sequel.function(:count).*.as(:count)] }
+        .group(Sequel.lit("date(datetime(created_at, ? || ' minutes'))", offset_min.to_s))
         .all
       counts = rows.each_with_object({}) { |row, acc| acc[row[:local_date]] = row[:count] }
 
@@ -234,10 +236,15 @@ module Neuz
       (time_utc + offset_min * 60).strftime("%A, %B %-d, %Y")
     end
 
+    # NOTE on bucketing: we filter by `created_at` (when Neuz received the
+    # item) rather than `published_at` (when the source published it). The
+    # mental model is "what arrived on my dashboard today", not "what the
+    # world emitted in the last 24h". The source publish date is still
+    # shown on each card as "X days ago / Mar 4" for context.
     def items_in_range(start_utc, end_utc, categories)
       ds = DB.connection[:items]
-        .where(Sequel.lit("published_at >= ? AND published_at < ?", start_utc, end_utc))
-        .order(Sequel.desc(:published_at))
+        .where(Sequel.lit("created_at >= ? AND created_at < ?", start_utc, end_utc))
+        .order(Sequel.desc(:created_at))
         .limit(500)
 
       selected = Array(categories).flatten.compact.reject(&:empty?)
@@ -268,7 +275,7 @@ module Neuz
         return CHIP_CACHE[:data] if now - CHIP_CACHE[:at] < 60
 
         rows = DB.connection[:items]
-          .where(Sequel.lit("published_at >= ?", now - 30 * 86_400))
+          .where(Sequel.lit("created_at >= ?", now - 30 * 86_400))
           .exclude(category: nil)
           .group_and_count(:category)
           .order(Sequel.desc(:count))

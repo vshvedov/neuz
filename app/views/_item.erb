@@ -5,15 +5,23 @@
   rescue StandardError
     host = ""
   end
-  rel = item[:published_at].is_a?(Time) ? item[:published_at] : Time.parse(item[:published_at].to_s)
-  diff = Time.now.utc - rel.utc
-  ago = case
-        when diff < 60 then "just now"
-        when diff < 3600 then "#{(diff/60).to_i}m ago"
-        when diff < 86_400 then "#{(diff/3600).to_i}h ago"
-        when diff < 604_800 then "#{(diff/86_400).to_i}d ago"
-        else rel.strftime("%b %-d")
-        end
+  pub = item[:published_at].is_a?(Time) ? item[:published_at] : Time.parse(item[:published_at].to_s)
+  arr = item[:created_at].is_a?(Time) ? item[:created_at] : Time.parse(item[:created_at].to_s)
+  format_ago = ->(t) {
+    diff = Time.now.utc - t.utc
+    case
+    when diff < 60 then "just now"
+    when diff < 3600 then "#{(diff/60).to_i}m ago"
+    when diff < 86_400 then "#{(diff/3600).to_i}h ago"
+    when diff < 604_800 then "#{(diff/86_400).to_i}d ago"
+    else t.strftime("%b %-d")
+    end
+  }
+  pub_ago = format_ago.call(pub)
+  # If the source was published noticeably earlier than the item arrived
+  # (≥1 day gap), show "from <date> · curated <relative>" so the user sees
+  # at a glance that the article isn't fresh news but was picked today.
+  show_arrival_separately = (arr.utc - pub.utc) > 86_400
   body_html = nil
   if item[:body] && !item[:body].strip.empty?
     require "kramdown"
@@ -31,7 +39,13 @@
         <span><%= host %></span>
       </span>
       <span aria-hidden="true">·</span>
-      <time datetime="<%= rel.utc.iso8601 %>" title="<%= rel.utc.iso8601 %>"><%= ago %></time>
+      <% if show_arrival_separately %>
+        <span title="Source published <%= pub.utc.iso8601 %>">from <%= pub.strftime("%b %-d") %></span>
+        <span aria-hidden="true">·</span>
+        <time datetime="<%= arr.utc.iso8601 %>" title="Arrived <%= arr.utc.iso8601 %>">curated <%= format_ago.call(arr) %></time>
+      <% else %>
+        <time datetime="<%= pub.utc.iso8601 %>" title="<%= pub.utc.iso8601 %>"><%= pub_ago %></time>
+      <% end %>
       <% if item[:category] %><span aria-hidden="true">·</span><span class="text-faint"><%= item[:category] %></span><% end %>
       <% if item[:importance] %><span aria-hidden="true">·</span><span class="text-accent" aria-label="Importance <%= item[:importance] %> of 5"><%= "★" * item[:importance] %></span><% end %>
     </p>

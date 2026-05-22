@@ -126,11 +126,22 @@ All env vars are optional unless noted. Defaults shown.
 
 ## Updating
 
-**Update the app:**
+**Update the app (one-liner):**
+
+```sh
+bin/update
+```
+
+That runs `git pull --ff-only` → `docker compose down` → `docker compose up -d --build`, prints the new container status, and probes `/healthz` for liveness. Flags: `--no-pull` (skip git), `--no-cache` (force rebuild), `--logs` (tail logs after up), `--force` (ignore a dirty working tree).
+
+The `neuz-data` volume / `./data` dir survives. Your API key, item history, and existing Claude Routine compatibility are all preserved.
+
+**Manually (equivalent):**
 
 ```sh
 # Docker:
 git pull
+docker compose down                  # required because container_name is pinned
 docker compose up -d --build         # rebuilds, runs migrations on boot
 # (or `docker compose pull && docker compose up -d` if you pull a pre-built image)
 

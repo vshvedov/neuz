@@ -26,9 +26,13 @@ module Neuz
     def run!(days = Config.prune_days)
       return 0 if days.zero?
 
+      # Prune by arrival time (created_at), not source publish date. This
+      # matches how the index/calendar bucket items, and prevents the
+      # corner case where a fresh ingest of an old article would be
+      # pruned the moment it arrives.
       cutoff = Time.now.utc - (days * 86_400)
       DB.connection.transaction do
-        ids = DB.connection[:items].where(Sequel.lit("published_at < ?", cutoff)).select_map(:id)
+        ids = DB.connection[:items].where(Sequel.lit("created_at < ?", cutoff)).select_map(:id)
         next 0 if ids.empty?
 
         DB.connection[:item_tags].where(item_id: ids).delete

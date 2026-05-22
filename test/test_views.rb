@@ -28,12 +28,48 @@ class ViewsTest < Minitest::Test
     assert_includes last_response.body, "example.com"
   end
 
+  def test_index_shows_items_ingested_today_even_if_source_is_old
+    # An article the source published 4 days ago but Claude curated TODAY
+    # should show up on today's dashboard.
+    Neuz::DB.connection[:items].insert(
+      external_id: "old-article",
+      source_url: "https://example.com/old-but-relevant",
+      published_at: Time.now.utc - 4 * 86_400,
+      title: "Old source, fresh on dashboard",
+      summary: "Curator picked this up today.",
+      user_id: 1,
+      created_at: Time.now.utc - 60,   # arrived 1min ago
+      updated_at: Time.now.utc - 60,
+    )
+    get "/"
+    assert_includes last_response.body, "Old source, fresh on dashboard"
+  end
+
+  def test_index_hides_items_ingested_yesterday_even_if_source_is_today
+    # Inverse: a "live" article that arrived yesterday belongs to
+    # yesterday's bucket, not today's.
+    Neuz::DB.connection[:items].insert(
+      external_id: "yesterday-arrival",
+      source_url: "https://example.com/published-today",
+      published_at: Time.now.utc,            # source published just now
+      title: "Stale arrival",
+      summary: "Arrived yesterday.",
+      user_id: 1,
+      created_at: Time.now.utc - 2 * 86_400,  # arrived 2 days ago
+      updated_at: Time.now.utc - 2 * 86_400,
+    )
+    get "/"
+    refute_includes last_response.body, "Stale arrival"
+  end
+
   def test_day_route_404_on_bad_date
     get "/day/abc"
     assert_equal 404, last_response.status
   end
 
   def test_day_route_renders_for_valid_date
+    # Day route buckets by created_at, so the row must have arrived on
+    # the target day for the rendering to include it.
     iso = "2026-05-22"
     Neuz::DB.connection[:items].insert(
       source_url: "https://example.com/day-test",
@@ -41,8 +77,8 @@ class ViewsTest < Minitest::Test
       title: "Day item",
       summary: "Summary",
       user_id: 1,
-      created_at: Time.now.utc,
-      updated_at: Time.now.utc,
+      created_at: Time.parse("#{iso}T12:00:00Z"),
+      updated_at: Time.parse("#{iso}T12:00:00Z"),
     )
     get "/day/#{iso}"
     assert_equal 200, last_response.status

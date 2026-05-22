@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# bin/update — pull latest, rebuild, restart.
+#
+# Designed for self-hosted single-container deployments. Run on the
+# server (or wherever `docker compose` actually deploys from).
+#
+#   git pull → docker compose down → docker compose up -d --build → status
+#
+# Flags:
+#   --no-pull, -n     Skip `git pull` (just rebuild from local source)
+#   --no-cache        Force a fresh build (`docker compose build --no-cache`)
+#   --logs, -l        Tail logs after the container is up (Ctrl-C to detach)
+#   --force, -f       Skip the dirty-working-tree warning
+#   --help, -h        This help
+#
+# Notes:
+#   * Your data volume (`neuz-data`) survives — only the container is replaced.
+#   * Your API key (hashed in the DB) survives, so your Claude Routine
+#     keeps working without any prompt changes.
+#   * The script uses `docker compose` (Compose v2). If you're on v1
+#     (`docker-compose`), edit DC below.
+
+set -euo pipefail
+
+# Resolve repo root from script location so `bin/update` works from any cwd.
+cd "$(dirname "$0")/.."
+REPO_ROOT="$(pwd)"
+
+DC="docker compose"
+NO_PULL=0
+NO_CACHE=0
+TAIL_LOGS=0
+FORCE=0
+
+usage() {
+  sed -n '2,/^$/p' "$0" | sed 's/^# //; s/^#$//'
+  exit 0
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -n|--no-pull) NO_PULL=1 ;;
+    --no-cache)   NO_CACHE=1 ;;
+    -l|--logs)    TAIL_LOGS=1 ;;
+    -f|--force)   FORCE=1 ;;
+    -h|--help)    usage ;;
+    *) echo "Unknown arg: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+
+# ── pre-flight ─────────────────────────────────────────────────
+command -v git >/dev/null    || { echo "git not on PATH" >&2; exit 1; }
+command -v docker >/dev/null || { echo "docker not on PATH" >&2; exit 1; }
+$DC version >/dev/null 2>&1  || { echo "docker compose v2 not available ('$DC version' failed)" >&2; exit 1; }
+
+if [ ! -d "$REPO_ROOT/.git" ]; then
+  echo "[bin/update] $REPO_ROOT is not a git checkout." >&2
+  exit 1
+fi
+
+# ── 1. git pull ────────────────────────────────────────────────
+if [ "$NO_PULL" -eq 0 ]; then
+  if [ -n "$(git status --porcelain)" ] && [ "$FORCE" -eq 0 ]; then
+    echo "[bin/update] Working tree is dirty:"
+    git status --short
+    echo "Re-run with --force to ignore, or commit/stash first."
+    exit 1
+  fi
+
+  echo "[bin/update] git pull --ff-only…"
+  BEFORE_SHA=$(git rev-parse HEAD)
+  git pull --ff-only
+  AFTER_SHA=$(git rev-parse HEAD)
+  if [ "$BEFORE_SHA" = "$AFTER_SHA" ]; then
+    echo "[bin/update] Already up to date ($AFTER_SHA)."
+  else
+    echo "[bin/update] $BEFORE_SHA → $AFTER_SHA"
+    git --no-pager log --oneline "$BEFORE_SHA..$AFTER_SHA" | head -20
+  fi
+else
+  echo "[bin/update] Skipping git pull (--no-pull)"
+fi
+
+# ── 2. compose down ────────────────────────────────────────────
+echo "[bin/update] Stopping current container(s)…"
+$DC down --remove-orphans
+
+# ── 3. (optional) cache-busting build ─────────────────────────
+if [ "$NO_CACHE" -eq 1 ]; then
+  echo "[bin/update] Building image (no cache)…"
+  $DC build --no-cache
+fi
+
+# ── 4. compose up -d --build ──────────────────────────────────
+echo "[bin/update] Starting fresh container…"
+$DC up -d --build
+
+# ── 5. status ─────────────────────────────────────────────────
+sleep 2
+echo
+$DC ps
+echo
+
+# Quick health probe (best-effort; doesn't fail the script if curl is missing
+# or the container is still warming up).
+if command -v curl >/dev/null 2>&1; then
+  PORT="$(grep -E '^\s*-\s*"\$\{NEUZ_HOST_PORT:-' docker-compose.yml | sed -E 's/.*-([0-9]+)\}:.*/\1/' | head -1)"
+  PORT="${PORT:-9292}"
+  for _ in 1 2 3 4 5; do
+    if curl -fsS "http://127.0.0.1:${PORT}/healthz" >/dev/null 2>&1; then
+      echo "[bin/update] /healthz on :${PORT} responding — container is up."
+      break
+    fi
+    sleep 1
+  done
+fi
+
+# First-boot hint: if the raw key file exists in the data volume, the user
+# probably hasn't run setup yet.
+if $DC exec -T neuz test -f /app/data/first_boot_key.txt 2>/dev/null; then
+  echo
+  echo "[bin/update] First-boot key file is present. Finish setup:"
+  echo "    $DC exec neuz bin/neuz setup"
+fi
+
+if [ "$TAIL_LOGS" -eq 1 ]; then
+  echo
+  echo "[bin/update] Tailing logs (Ctrl-C to detach)…"
+  $DC logs -f
+fi
