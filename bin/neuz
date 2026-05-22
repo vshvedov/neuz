@@ -1,0 +1,160 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+#
+# bin/neuz — local CLI for setup, key rotation, and status.
+# Source of truth for the raw API key lives in data/first_boot_key.txt;
+# this CLI is the only sanctioned way to read/rotate it.
+
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+ENV["RACK_ENV"] ||= "production"
+require "optparse"
+require "neuz"
+
+USAGE = <<~USAGE
+  Usage: bin/neuz <command> [options]
+
+  Commands:
+    setup        Print the API key and Claude prompts. First command to run.
+                   --acknowledge / -y   delete the first-boot key file after printing
+                   --url URL            override the displayed instance URL
+                   --rotate             rotate first (mint new key) then print
+    prompts      Reprint the Claude prompts.
+                   --key KEY            substitute this key (verified against the DB)
+                   --stdin              read key from stdin
+                   --url URL            override the displayed instance URL
+                 (Falls back to data/first_boot_key.txt, then NEUZ_KEY env.)
+    rotate       Mint a new key, invalidate the old one, print the new raw key.
+    acknowledge  Delete the first-boot key file. Does nothing if already gone.
+    status       Print instance metadata.
+    migrate      Apply any pending Sequel migrations.
+    help         Print this help.
+USAGE
+
+def default_url
+  Neuz::Config.public_url || "http://localhost:#{ENV['PORT'] || '9292'}"
+end
+
+def cmd_setup(argv)
+  ack = false
+  rotate_first = false
+  url = nil
+  OptionParser.new do |o|
+    o.on("-y", "--acknowledge") { ack = true }
+    o.on("--rotate") { rotate_first = true }
+    o.on("--url URL") { |v| url = v }
+  end.parse!(argv)
+
+  Neuz.boot!
+  Neuz::Setup.rotate! if rotate_first
+  raw = Neuz::Setup.read_raw_key
+  ack_state = Neuz::Setup.acknowledged?
+  $stdout.puts Neuz::Setup.banner(url: url || default_url, raw_key: raw, acknowledged: ack_state)
+
+  if ack && raw
+    if Neuz::Setup.acknowledge!
+      $stdout.puts "  ✓ First-boot key file deleted (acknowledged)."
+    end
+  end
+  0
+end
+
+def cmd_prompts(argv)
+  url = nil
+  key_arg = nil
+  from_stdin = false
+  OptionParser.new do |o|
+    o.on("--url URL") { |v| url = v }
+    o.on("--key KEY") { |v| key_arg = v }
+    o.on("--stdin") { from_stdin = true }
+  end.parse!(argv)
+
+  Neuz.boot!
+
+  raw =
+    if key_arg
+      key_arg.strip
+    elsif from_stdin
+      $stdin.read.strip
+    elsif (file_key = Neuz::Setup.read_raw_key)
+      file_key
+    elsif ENV["NEUZ_KEY"] && !ENV["NEUZ_KEY"].empty?
+      ENV["NEUZ_KEY"].strip
+    end
+
+  if raw.nil? || raw.empty?
+    warn "No key available. Provide one via --key, --stdin, NEUZ_KEY env, or"
+    warn "  keep data/first_boot_key.txt around (don't acknowledge yet)."
+    warn "If you've lost the key entirely, run `bin/neuz rotate` to mint a new one."
+    return 1
+  end
+
+  # Verify against the stored digest so we don't print prompts containing
+  # a wrong key. If the user passed --key and it doesn't match, refuse —
+  # they probably typoed and would have shipped a non-working Routine.
+  digest = Neuz::Auth.digest(raw)
+  matched = Neuz::DB.connection[:api_keys].where(sha256: digest).any?
+  unless matched
+    warn "Key did not match any stored api_keys.sha256. Refusing to print."
+    warn "If you really want to print without verification, edit lib/neuz/setup.rb."
+    return 1
+  end
+
+  $stdout.puts Neuz::Setup.banner(url: url || default_url, raw_key: raw)
+  0
+end
+
+def cmd_rotate(_argv)
+  raw = Neuz::Setup.rotate!
+  $stdout.puts "New API key (copy this once):"
+  $stdout.puts
+  $stdout.puts "    #{raw}"
+  $stdout.puts
+  $stdout.puts "The old key is now invalid. Update any Claude Routine that posts to Neuz."
+  $stdout.puts "Run `bin/neuz acknowledge` after you've copied the key."
+  0
+end
+
+def cmd_acknowledge(_argv)
+  Neuz.boot!
+  if Neuz::Setup.acknowledge!
+    $stdout.puts "✓ First-boot key file deleted."
+  else
+    $stdout.puts "(No first-boot key file present — nothing to do.)"
+  end
+  0
+end
+
+def cmd_status(_argv)
+  s = Neuz::Setup.status
+  pad = s.keys.map { |k| k.to_s.length }.max
+  s.each { |k, v| $stdout.puts "  #{k.to_s.ljust(pad)}  #{v}" }
+  0
+end
+
+def cmd_migrate(_argv)
+  Neuz::Config.ensure_data_dir!
+  Neuz::DB.connect!
+  Neuz::DB.migrate!
+  $stdout.puts "✓ Migrations applied."
+  0
+end
+
+def cmd_help(_argv)
+  $stdout.puts USAGE
+  0
+end
+
+cmd = ARGV.shift
+case cmd
+when "setup"        then exit cmd_setup(ARGV)
+when "prompts"      then exit cmd_prompts(ARGV)
+when "rotate"       then exit cmd_rotate(ARGV)
+when "acknowledge"  then exit cmd_acknowledge(ARGV)
+when "status"       then exit cmd_status(ARGV)
+when "migrate"      then exit cmd_migrate(ARGV)
+when "help", "-h", "--help", nil then exit cmd_help(ARGV)
+else
+  warn "Unknown command: #{cmd.inspect}"
+  warn USAGE
+  exit 2
+end

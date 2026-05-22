@@ -1,0 +1,16 @@
+<div class="space-y-6">
+  <header class="space-y-1">
+    <p class="text-xs uppercase tracking-widest text-faint"><%= today_label %></p>
+    <h1 class="font-serif text-3xl sm:text-4xl font-semibold leading-tight">Today</h1>
+  </header>
+
+  <% if chips.any? %><%== render(:_chips, locals: { chips: chips, selected: selected }) %><% end %>
+
+  <% if items.empty? %>
+    <%== render(:_empty) %>
+  <% else %>
+    <ol class="divide-y divide-rule">
+      <% items.each do |item| %><%== render(:_item, locals: { item: item }) %><% end %>
+    </ol>
+  <% end %>
+</div>

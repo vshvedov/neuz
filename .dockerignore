@@ -1,0 +1,16 @@
+.git
+.gitignore
+data/
+tmp/
+log/
+test/
+coverage/
+*.log
+.DS_Store
+.bundle
+vendor/bundle
+node_modules
+.env
+.env.local
+README.md
+docs/

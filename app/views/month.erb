@@ -1,0 +1,46 @@
+<div class="space-y-6">
+  <header class="flex items-end justify-between gap-4">
+    <div>
+      <p class="text-xs uppercase tracking-widest text-faint">Calendar</p>
+      <h1 class="font-serif text-3xl sm:text-4xl font-semibold leading-tight"><%= month_label %></h1>
+    </div>
+    <nav class="flex gap-2" aria-label="Months">
+      <a href="/month/<%= prev_ym %>" class="nav-link" aria-label="Previous month">← <%= prev_ym %></a>
+      <a href="/month/<%= next_ym %>" class="nav-link" aria-label="Next month"><%= next_ym %> →</a>
+    </nav>
+  </header>
+
+  <div class="grid grid-cols-7 gap-1 sm:gap-2 text-xs sm:text-sm" role="grid">
+    <% %w[Mon Tue Wed Thu Fri Sat Sun].each do |dow| %>
+      <div class="text-center text-faint pb-1 uppercase tracking-widest" role="columnheader" aria-label="<%= dow %>"><%= dow %></div>
+    <% end %>
+    <%
+      lead = (first_day.cwday - 1) # Mon = 1, so Mon offset = 0
+      lead.times do
+    %>
+      <div aria-hidden="true"></div>
+    <% end %>
+    <% (first_day..last_day).each do |d|
+         iso = d.strftime("%Y-%m-%d")
+         count = counts[iso].to_i
+         intensity = case
+                     when count == 0 then "cell-empty"
+                     when count <= 3 then "cell-light"
+                     when count <= 9 then "cell-medium"
+                     else "cell-strong"
+                     end
+         label = count.zero? ? "#{d.strftime('%A, %B %-d')}, no items" : "#{d.strftime('%A, %B %-d')}, #{count} item#{'s' if count != 1}"
+    %>
+      <% if count.zero? %>
+        <div class="day-cell <%= intensity %>" role="gridcell" aria-label="<%= label %>">
+          <span class="day-num"><%= d.day %></span>
+        </div>
+      <% else %>
+        <a href="/day/<%= iso %>" class="day-cell <%= intensity %>" role="gridcell" aria-label="<%= label %>">
+          <span class="day-num"><%= d.day %></span>
+          <span class="day-count"><%= count %></span>
+        </a>
+      <% end %>
+    <% end %>
+  </div>
+</div>

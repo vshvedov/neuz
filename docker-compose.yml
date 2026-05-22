@@ -1,0 +1,30 @@
+services:
+  neuz:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: neuz:latest
+    container_name: neuz
+    restart: unless-stopped
+    ports:
+      - "${NEUZ_HOST_PORT:-9292}:9292"
+    volumes:
+      - neuz-data:/app/data
+    environment:
+      RACK_ENV: production
+      PORT: 9292
+      NEUZ_PRUNE_DAYS: ${NEUZ_PRUNE_DAYS:-90}
+      NEUZ_RATE_CAPACITY: ${NEUZ_RATE_CAPACITY:-60}
+      NEUZ_RATE_REFILL_PER_MIN: ${NEUZ_RATE_REFILL_PER_MIN:-60}
+      NEUZ_BATCH_LIMIT: ${NEUZ_BATCH_LIMIT:-500}
+      NEUZ_JOURNAL_MODE: ${NEUZ_JOURNAL_MODE:-WAL}
+      NEUZ_URL: ${NEUZ_URL:-}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9292/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  neuz-data:

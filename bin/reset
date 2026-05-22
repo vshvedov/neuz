@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# bin/reset — wipe Neuz runtime state and force a fresh first-boot.
+#
+# Destroys the SQLite database, the session secret, and the
+# revealed-once first-boot API key file. The DB schema is then
+# re-created so `bin/dev` (or `docker compose up`) starts from
+# the same clean slate a fresh clone would see.
+#
+# Does NOT touch source files, gems, built CSS, or fonts.
+#
+# Use --force / -f to skip the confirmation.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+NEUZ_DATA_DIR="${NEUZ_DATA_DIR:-$PWD/data}"
+export NEUZ_DATA_DIR
+
+FORCE=0
+KEEP_RUNNING=0
+for arg in "$@"; do
+  case "$arg" in
+    -f|--force) FORCE=1 ;;
+    --keep-running) KEEP_RUNNING=1 ;;
+    -h|--help)
+      cat <<EOF
+Usage: bin/reset [--force] [--keep-running]
+
+  --force, -f       Skip the y/N prompt.
+  --keep-running    Don't pkill puma before wiping (default: stop puma first).
+EOF
+      exit 0
+      ;;
+    *)
+      echo "Unknown arg: $arg" >&2
+      exit 2
+      ;;
+  esac
+done
+
+echo "[bin/reset] This will DELETE:"
+echo "  $NEUZ_DATA_DIR/neuz.db (+ -wal, -shm)"
+echo "  $NEUZ_DATA_DIR/first_boot_key.txt"
+echo "  $NEUZ_DATA_DIR/session_secret"
+
+if [ "$FORCE" -ne 1 ]; then
+  printf "Proceed? [y/N] "
+  read -r answer
+  case "$answer" in
+    y|Y|yes|YES) ;;
+    *) echo "Aborted."; exit 1 ;;
+  esac
+fi
+
+if [ "$KEEP_RUNNING" -ne 1 ]; then
+  if pgrep -f "puma.*config/puma.rb" >/dev/null 2>&1; then
+    echo "[bin/reset] Stopping running Puma…"
+    pkill -f "puma.*config/puma.rb" || true
+    sleep 1
+  fi
+fi
+
+# Wipe runtime state but keep the data dir (preserves any mount
+# permissions the user has set up).
+mkdir -p "$NEUZ_DATA_DIR"
+chmod 700 "$NEUZ_DATA_DIR" 2>/dev/null || true
+
+for f in neuz.db neuz.db-wal neuz.db-shm first_boot_key.txt session_secret .first_boot_announced; do
+  if [ -e "$NEUZ_DATA_DIR/$f" ]; then
+    rm -f "$NEUZ_DATA_DIR/$f"
+    echo "  removed $NEUZ_DATA_DIR/$f"
+  fi
+done
+
+echo "[bin/reset] Re-applying migrations…"
+bundle exec rake db:migrate
+
+echo "[bin/reset] Done. Next first-boot key will mint on the next request."
+echo "           Start the server with: bin/dev"

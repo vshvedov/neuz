@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# bin/dev — start Neuz locally (no Docker required).
+#
+# Idempotent: safe to re-run. Installs gems if missing, builds CSS,
+# fetches webfonts on first run, applies migrations, then execs Puma
+# in the foreground.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+PORT="${PORT:-9292}"
+NEUZ_DATA_DIR="${NEUZ_DATA_DIR:-$PWD/data}"
+RACK_ENV="${RACK_ENV:-development}"
+
+export PORT NEUZ_DATA_DIR RACK_ENV
+
+# ── 1. Gems ─────────────────────────────────────────────────────
+if ! bundle check >/dev/null 2>&1; then
+  echo "[bin/dev] Installing gems…"
+  bundle install
+fi
+
+# ── 2. Tailwind CSS ─────────────────────────────────────────────
+if ! command -v tailwindcss >/dev/null 2>&1; then
+  cat >&2 <<EOF
+[bin/dev] tailwindcss CLI not found on PATH.
+
+Install one of:
+  • brew install tailwindcss
+  • curl -sSL -o /usr/local/bin/tailwindcss \\
+      "https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.13/tailwindcss-macos-arm64" \\
+      && chmod +x /usr/local/bin/tailwindcss
+
+Or run the Docker build (Dockerfile downloads it automatically).
+EOF
+  exit 1
+fi
+
+echo "[bin/dev] Building CSS…"
+tailwindcss -i config/tailwind.input.css -o public/app.css --minify
+
+# ── 3. Fonts (first run only) ───────────────────────────────────
+if [ ! -f public/fonts/Inter-Regular.woff2 ]; then
+  echo "[bin/dev] Downloading webfonts (one-time)…"
+  mkdir -p public/fonts
+  curl -sSL -o public/fonts/Inter-Regular.woff2     "https://rsms.me/inter/font-files/Inter-Regular.woff2?v=4.0"
+  curl -sSL -o public/fonts/Inter-Medium.woff2      "https://rsms.me/inter/font-files/Inter-Medium.woff2?v=4.0"
+  curl -sSL -o public/fonts/Inter-SemiBold.woff2    "https://rsms.me/inter/font-files/Inter-SemiBold.woff2?v=4.0"
+  curl -sSL -o public/fonts/Newsreader-Regular.woff2  "https://cdn.jsdelivr.net/fontsource/fonts/newsreader@latest/latin-400-normal.woff2"
+  curl -sSL -o public/fonts/Newsreader-SemiBold.woff2 "https://cdn.jsdelivr.net/fontsource/fonts/newsreader@latest/latin-600-normal.woff2"
+fi
+
+# ── 4. Migrations ───────────────────────────────────────────────
+echo "[bin/dev] Migrating database at $NEUZ_DATA_DIR …"
+bundle exec rake db:migrate
+
+# ── 5. Boot Puma (foreground) ───────────────────────────────────
+echo "[bin/dev] Starting Puma on http://127.0.0.1:$PORT"
+echo "[bin/dev] On first boot (or after bin/reset), run in another terminal:"
+echo "[bin/dev]    bin/neuz setup"
+echo "[bin/dev] Ctrl-C to stop."
+exec bundle exec puma -C config/puma.rb

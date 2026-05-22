@@ -1,0 +1,55 @@
+<%
+  require "uri"
+  begin
+    host = URI.parse(item[:source_url]).host || ""
+  rescue StandardError
+    host = ""
+  end
+  rel = item[:published_at].is_a?(Time) ? item[:published_at] : Time.parse(item[:published_at].to_s)
+  diff = Time.now.utc - rel.utc
+  ago = case
+        when diff < 60 then "just now"
+        when diff < 3600 then "#{(diff/60).to_i}m ago"
+        when diff < 86_400 then "#{(diff/3600).to_i}h ago"
+        when diff < 604_800 then "#{(diff/86_400).to_i}d ago"
+        else rel.strftime("%b %-d")
+        end
+  body_html = nil
+  if item[:body] && !item[:body].strip.empty?
+    require "kramdown"
+    body_html = Kramdown::Document.new(item[:body], auto_ids: false, smart_quotes: %w[apos apos quot quot]).to_html
+  end
+%>
+<li class="py-4 sm:py-5 first:pt-0">
+  <article class="space-y-2">
+    <h2 class="font-serif text-xl sm:text-2xl font-semibold leading-snug">
+      <a href="<%= item[:source_url] %>" target="_blank" rel="noopener noreferrer" class="hover:text-accent underline-offset-2 hover:underline"><%= item[:title] %></a>
+    </h2>
+    <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-faint">
+      <span class="inline-flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" aria-hidden="true"><use href="#ph-link-simple"/></svg>
+        <span><%= host %></span>
+      </span>
+      <span aria-hidden="true">·</span>
+      <time datetime="<%= rel.utc.iso8601 %>" title="<%= rel.utc.iso8601 %>"><%= ago %></time>
+      <% if item[:category] %><span aria-hidden="true">·</span><span class="text-faint"><%= item[:category] %></span><% end %>
+      <% if item[:importance] %><span aria-hidden="true">·</span><span class="text-accent" aria-label="Importance <%= item[:importance] %> of 5"><%= "★" * item[:importance] %></span><% end %>
+    </p>
+    <% if item[:summary] && !item[:summary].empty? %>
+      <p class="text-base leading-relaxed text-ink/90"><%= item[:summary] %></p>
+    <% end %>
+    <% if body_html %>
+      <details class="text-sm">
+        <summary class="cursor-pointer text-faint hover:text-ink select-none">More</summary>
+        <div class="prose mt-2"><%== body_html %></div>
+      </details>
+    <% end %>
+    <% if item[:tags] && item[:tags].any? %>
+      <ul class="flex flex-wrap gap-1.5 pt-1">
+        <% item[:tags].each do |t| %>
+          <li class="text-xs px-2 py-0.5 rounded-full bg-tag text-ink/80"><%= t %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </article>
+</li>

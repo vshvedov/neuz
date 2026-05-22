@@ -1,0 +1,119 @@
+<% nonce = request.env["neuz.csp_nonce"] %>
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex,nofollow">
+<title>Neuz</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preload" href="/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/Newsreader-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/app.css">
+<script nonce="<%= nonce %>">
+(function(){
+  try {
+    var t = localStorage.getItem('neuz-theme') || 'auto';
+    var dark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.documentElement.classList.add('dark');
+    document.documentElement.dataset.theme = t;
+  } catch(e) {}
+  if (!/(?:^|;\s*)tz=/.test(document.cookie)) {
+    var off = -new Date().getTimezoneOffset();
+    document.cookie = 'tz=' + off + '; path=/; max-age=31536000; samesite=lax';
+    if (!sessionStorage.getItem('neuz-tz-reloaded')) {
+      sessionStorage.setItem('neuz-tz-reloaded', '1');
+      window.location.reload();
+    }
+  }
+})();
+</script>
+</head>
+<body class="font-sans bg-paper text-ink antialiased min-h-screen flex flex-col">
+<%== render(:_sprite) %>
+<a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:bg-accent focus:text-paper focus:px-3 focus:py-2 focus:rounded">Skip to content</a>
+<header class="border-b border-rule">
+  <div class="mx-auto max-w-prose px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+    <a href="/" class="flex items-center gap-2 group" aria-label="Neuz home">
+      <svg class="w-6 h-6 text-accent" aria-hidden="true"><use href="#ph-newspaper-clipping"/></svg>
+      <span class="font-serif text-xl font-semibold tracking-tight">Neuz</span>
+    </a>
+    <nav class="flex items-center gap-1 sm:gap-2" aria-label="Primary">
+      <a href="/" class="nav-link" aria-label="Today">
+        <svg class="w-5 h-5" aria-hidden="true"><use href="#ph-sun"/></svg>
+        <span class="hidden sm:inline">Today</span>
+      </a>
+      <a href="/month/<%= Time.now.utc.strftime('%Y-%m') %>" class="nav-link" aria-label="Calendar">
+        <svg class="w-5 h-5" aria-hidden="true"><use href="#ph-calendar"/></svg>
+        <span class="hidden sm:inline">Calendar</span>
+      </a>
+      <div class="theme-toggle inline-flex items-center gap-0 ml-1 sm:ml-2 border border-rule rounded-full p-0.5" role="group" aria-label="Theme">
+        <button type="button" data-theme="light" class="theme-btn" aria-label="Light theme" aria-pressed="false">
+          <svg class="w-4 h-4" aria-hidden="true"><use href="#ph-sun"/></svg>
+        </button>
+        <button type="button" data-theme="auto" class="theme-btn" aria-label="Auto theme" aria-pressed="true">
+          <svg class="w-4 h-4" aria-hidden="true"><use href="#ph-circle-half"/></svg>
+        </button>
+        <button type="button" data-theme="dark" class="theme-btn" aria-label="Dark theme" aria-pressed="false">
+          <svg class="w-4 h-4" aria-hidden="true"><use href="#ph-moon"/></svg>
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="mx-auto max-w-prose w-full px-4 sm:px-6 py-6 sm:py-10 flex-1"><%== yield %></main>
+
+<footer class="mx-auto max-w-prose w-full px-4 sm:px-6 py-10 text-xs text-faint">
+  <p>Neuz v<%= Neuz.version %> · self-hosted · no tracking · <a class="underline" href="/healthz">healthz</a></p>
+</footer>
+
+<script nonce="<%= nonce %>">
+(function(){
+  var root = document.documentElement;
+  function applyTheme(t){
+    root.dataset.theme = t;
+    if (t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    document.querySelectorAll('.theme-btn').forEach(function(b){
+      b.setAttribute('aria-pressed', String(b.dataset.theme === t));
+    });
+  }
+  var current = localStorage.getItem('neuz-theme') || 'auto';
+  applyTheme(current);
+  document.querySelectorAll('.theme-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      current = b.dataset.theme;
+      try { localStorage.setItem('neuz-theme', current); } catch(e) {}
+      applyTheme(current);
+    });
+  });
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){
+      if ((localStorage.getItem('neuz-theme') || 'auto') === 'auto') applyTheme('auto');
+    });
+  } catch(e) {}
+
+  var form = document.getElementById('chip-form');
+  if (form) {
+    form.querySelectorAll('button.chip').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var pressed = btn.getAttribute('aria-pressed') === 'true';
+        btn.setAttribute('aria-pressed', String(!pressed));
+        var url = new URL(window.location.href);
+        url.searchParams.delete('category');
+        form.querySelectorAll('button.chip[aria-pressed="true"]').forEach(function(b){
+          url.searchParams.append('category', b.dataset.category);
+        });
+        window.location.assign(url.toString());
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<form id="chip-form" class="-mx-1 flex flex-wrap gap-1.5 sticky top-0 bg-paper/95 backdrop-blur z-10 py-2" aria-label="Categories" method="get" action="">
+  <% chips.each do |c|
+       cat = c[:category]
+       pressed = selected.include?(cat)
+  %>
+    <button type="button" class="chip<%= pressed ? ' chip-on' : '' %>" data-category="<%= cat %>" aria-pressed="<%= pressed %>">
+      <span><%= cat %></span>
+      <span class="chip-count"><%= c[:count] %></span>
+    </button>
+  <% end %>
+</form>
+<noscript>
+  <p class="text-xs text-faint mt-1">Chip filters require JavaScript. (Items still render below.)</p>
+</noscript>

@@ -1,0 +1,10 @@
+<section class="text-center py-12 sm:py-20 space-y-4">
+  <div class="mx-auto w-12 h-12 rounded-full bg-tag flex items-center justify-center text-faint">
+    <svg class="w-7 h-7" aria-hidden="true"><use href="#ph-coffee"/></svg>
+  </div>
+  <h2 class="font-serif text-xl sm:text-2xl">You're all caught up.</h2>
+  <p class="text-faint">Enjoy the calm.</p>
+  <p>
+    <a href="/month/<%= Time.now.utc.strftime('%Y-%m') %>" class="text-accent underline underline-offset-2">Check past days →</a>
+  </p>
+</section>
