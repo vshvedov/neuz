@@ -1,5 +1,8 @@
 # Neuz
 
+<img width="1617" height="1203" alt="image" src="https://github.com/user-attachments/assets/a17d58b5-e06a-4d71-821f-51dd81364da0" />
+
+
 A self-hosted, single-user news dashboard whose content is curated by **Claude** (via Claude Routines / Cowork) on a schedule you control. No ads. No tracking. No external telemetry. Runs as one tiny container on your laptop, a Pi, or a VPS.
 
 ```
