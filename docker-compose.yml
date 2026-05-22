@@ -19,6 +19,9 @@ services:
       NEUZ_BATCH_LIMIT: ${NEUZ_BATCH_LIMIT:-500}
       NEUZ_JOURNAL_MODE: ${NEUZ_JOURNAL_MODE:-WAL}
       NEUZ_URL: ${NEUZ_URL:-}
+      NEUZ_BRAND: ${NEUZ_BRAND:-}
+      NEUZ_TAGLINE: ${NEUZ_TAGLINE:-}
+      NEUZ_REPO_URL: ${NEUZ_REPO_URL:-}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9292/healthz"]
       interval: 30s

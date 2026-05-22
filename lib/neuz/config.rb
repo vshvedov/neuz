@@ -82,6 +82,20 @@ module Neuz
       ENV["NEUZ_URL"] || request_base_url
     end
 
+    def brand
+      value = ENV["NEUZ_BRAND"].to_s.strip
+      value.empty? ? "Neuz" : value
+    end
+
+    def tagline
+      ENV["NEUZ_TAGLINE"].to_s.strip
+    end
+
+    def repo_url
+      value = ENV["NEUZ_REPO_URL"].to_s.strip
+      value.empty? ? "https://github.com/vshvedov/neuz" : value
+    end
+
     def rack_env
       ENV["RACK_ENV"] || "production"
     end

@@ -109,6 +109,9 @@ All env vars are optional unless noted. Defaults shown.
 | `NEUZ_DATA_DIR`               | `/app/data`     | DB + first-boot key + session secret |
 | `NEUZ_DB_PATH`                | `$DATA/neuz.db` | SQLite path                          |
 | `NEUZ_URL`                    | (request URL)   | Used in prompt substitution          |
+| `NEUZ_BRAND`                  | `Neuz`          | Brand text in header, `<title>`, footer |
+| `NEUZ_TAGLINE`                | (empty)         | Optional small text after the brand  |
+| `NEUZ_REPO_URL`               | `github.com/vshvedov/neuz` | URL behind the footer "GitHub" link |
 | `NEUZ_VERSION`                | (built-in)      | Overrides version in /healthz        |
 | `NEUZ_PRUNE_DAYS`             | `90`            | `0` to disable auto-prune            |
 | `NEUZ_PRUNE_INTERVAL_SECONDS` | `3600`          | Prune scan interval                  |

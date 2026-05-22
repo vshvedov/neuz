@@ -1,4 +1,6 @@
 <% nonce = request.env["neuz.csp_nonce"] %>
+<% brand = Neuz::Config.brand %>
+<% tagline = Neuz::Config.tagline %>
 <!DOCTYPE html>
 <html lang="en" class="">
 <head>
@@ -6,7 +8,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex,nofollow">
-<title>Neuz</title>
+<title><%= brand %></title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preload" href="/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/Newsreader-Regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -35,9 +37,10 @@
 <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:bg-accent focus:text-paper focus:px-3 focus:py-2 focus:rounded">Skip to content</a>
 <header class="border-b border-rule">
   <div class="mx-auto max-w-prose px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-    <a href="/" class="flex items-center gap-2 group" aria-label="Neuz home">
+    <a href="/" class="flex items-center gap-2 group" aria-label="<%= brand %> home">
       <svg class="w-6 h-6 text-accent" aria-hidden="true"><use href="#ph-newspaper-clipping"/></svg>
-      <span class="font-serif text-xl font-semibold tracking-tight">Neuz</span>
+      <span class="font-serif text-xl font-semibold tracking-tight"><%= brand %></span>
+      <% unless tagline.empty? %><span class="hidden sm:inline text-faint text-sm font-sans font-normal">· <%= tagline %></span><% end %>
     </a>
     <nav class="flex items-center gap-1 sm:gap-2" aria-label="Primary">
       <a href="/" class="nav-link" aria-label="Today">
@@ -66,7 +69,20 @@
 <main id="main" class="mx-auto max-w-prose w-full px-4 sm:px-6 py-6 sm:py-10 flex-1"><%== yield %></main>
 
 <footer class="mx-auto max-w-prose w-full px-4 sm:px-6 py-10 text-xs text-faint">
-  <p>Neuz v<%= Neuz.version %> · self-hosted · no tracking · <a class="underline" href="/healthz">healthz</a></p>
+  <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+    <span><%= brand %> v<%= Neuz.version %></span>
+    <span aria-hidden="true">·</span>
+    <span>self-hosted</span>
+    <span aria-hidden="true">·</span>
+    <span>no tracking</span>
+    <span aria-hidden="true">·</span>
+    <a class="underline" href="/healthz">healthz</a>
+    <span aria-hidden="true">·</span>
+    <a class="inline-flex items-center gap-1 underline" href="<%= Neuz::Config.repo_url %>" target="_blank" rel="noopener noreferrer" aria-label="Source on GitHub">
+      <svg class="w-3.5 h-3.5" aria-hidden="true"><use href="#ph-github-logo"/></svg>
+      <span>GitHub</span>
+    </a>
+  </p>
 </footer>
 
 <script nonce="<%= nonce %>">
