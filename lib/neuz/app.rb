@@ -131,6 +131,7 @@ module Neuz
         selected: Array(r.params["category"]).flatten.compact,
         today_label: format_user_date(Time.now.utc, offset_min),
         tz_offset: offset_min,
+        update_available: UpdateCheck.update_available?,
       })
     end
 

@@ -11,6 +11,7 @@ require_relative "neuz/ingest"
 require_relative "neuz/prompts"
 require_relative "neuz/prune"
 require_relative "neuz/setup"
+require_relative "neuz/update_check"
 require_relative "neuz/app"
 
 module Neuz
@@ -37,6 +38,7 @@ module Neuz
       App::CHIP_CACHE[:at] = Time.at(0)
       App::CHIP_CACHE[:data] = []
     end
+    UpdateCheck.reset_for_test! if defined?(UpdateCheck)
   end
 
   def ensure_first_api_key!

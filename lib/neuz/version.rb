@@ -1,5 +1,5 @@
 module Neuz
-  VERSION = "0.1.3".freeze
+  VERSION = "0.1.4".freeze
 
   def self.version
     ENV["NEUZ_VERSION"] || VERSION

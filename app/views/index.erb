@@ -2,6 +2,11 @@
   <header class="space-y-1">
     <p class="text-xs uppercase tracking-widest text-faint"><%= today_label %></p>
     <h1 class="font-serif text-3xl sm:text-4xl font-semibold leading-tight">Today</h1>
+    <% if update_available %>
+      <p class="text-xs">
+        <a class="underline text-accent" href="<%= Neuz::Config.repo_url %>/releases" target="_blank" rel="noopener noreferrer">[update available]</a>
+      </p>
+    <% end %>
   </header>
 
   <% if chips.any? %><%== render(:_chips, locals: { chips: chips, selected: selected }) %><% end %>
