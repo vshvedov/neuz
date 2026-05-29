@@ -1,6 +1,6 @@
 """
 title: Neuz Publisher
-author: vshvedov
+author: Vlad Shvedov
 author_url: https://github.com/vshvedov/neuz
 funding_url: https://github.com/vshvedov/neuz
 version: 0.1.0

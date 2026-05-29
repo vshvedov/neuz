@@ -3,7 +3,9 @@
 <img width="1617" height="1203" alt="Screenshot 2026-05-22 at 12 52 52 PM" src="https://github.com/user-attachments/assets/0e825e11-a858-4679-bcbb-6d2f56eefee3" />
 
 
-A self-hosted, single-user news dashboard whose content is curated by **Claude** (via Claude Routines / Cowork) on a schedule you control. No ads. No tracking. No external telemetry. Runs as one tiny container on your laptop, a Pi, or a VPS.
+A self-hosted, single-user news dashboard whose content is curated by an **AI assistant of your choice** on a schedule you control. No ads. No tracking. No external telemetry. Runs as one tiny container on your laptop, a Pi, or a VPS.
+
+Under the hood Neuz is just an authenticated ingest API (`POST /api/items`) plus a clean reader UI — it doesn't care *what* fills it. **Claude Routines** is the turnkey, scheduled curator (its prompts ship in the box); a new **[Open WebUI tool](integrations/openwebui/)** lets any tool-calling model — self-hosted (Qwen, Llama, …) or Claude — publish on demand from a chat; and you can always point your own script or cron at the API.
 
 ```
 docker compose up -d
@@ -15,7 +17,21 @@ That's the install: the CLI mints a single bearer API key on first boot, prints 
 
 ---
 
+## Curation options
+
+Neuz's only ingest contract is `POST /api/items` (bearer auth, JSON below). Pick whatever curator fits — they're not mutually exclusive:
+
+| Curator | Cadence | Best for |
+|---|---|---|
+| **Claude Routines / Cowork** | scheduled (cron) | hands-off, always-on curation — prompts ship with Neuz (see *How it works*) |
+| **[Open WebUI tool](integrations/openwebui/)** | on-demand, from a chat | a self-hosted model (or Claude) you steer conversationally, then say "publish to Neuz" |
+| **Your own script** | anything | curl / cron / n8n / a routine in another tool — just POST the JSON shape below |
+
+The rest of this README walks through the Claude Routines path (the turnkey option) and then the API contract every curator targets.
+
 ## How it works
+
+*The Claude Routines path, step by step:*
 
 ```
 ┌────────────────────┐       POST /api/items
@@ -45,6 +61,8 @@ That's the install: the CLI mints a single bearer API key on first boot, prints 
 If you lose the key, `bin/neuz rotate` mints a new one and invalidates the old. The old Claude Routine will start returning 401 until you update the prompt with the new key.
 
 ## API
+
+This is the universal contract — Claude Routines, the [Open WebUI tool](integrations/openwebui/), and any script you write all just POST this same shape.
 
 `POST /api/items` — `Authorization: Bearer <key>`, JSON body:
 
