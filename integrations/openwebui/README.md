@@ -2,9 +2,12 @@
 
 A one-file [Open WebUI](https://github.com/open-webui/open-webui) **tool** that lets a
 chat model publish the news items it just generated straight into your Neuz
-dashboard — the same `POST /api/items` path Claude Routines use, but triggered
-on demand from a conversation. Works with any backend model that supports tool
-calling (self-hosted Qwen/Llama via Ollama, or Claude via an API connection).
+dashboard — the same `POST /api/items` path Claude Routines use. Trigger it
+**on demand** from a conversation, or run it **unattended on a schedule** via
+Open WebUI **Automations** (an RRULE-based scheduler that runs a model with its
+attached tools) — a self-hosted parallel to Claude Routines. Works with any
+backend model that supports tool calling (self-hosted Qwen/Llama via Ollama, or
+Claude via an API connection).
 
 ## Install
 
@@ -40,6 +43,10 @@ the authenticated POST server-side.
    calls `publish_news` with the items; the tool POSTs the batch and reports back
    how many were `accepted` / `updated` / `unchanged` (Neuz dedupes on
    `source_url`).
+3. **To run it on a schedule** (hands-off, like a Claude Routine): create an Open
+   WebUI **Automation** (Workspace → Automations) with a recurring rule and a
+   prompt like *"Research today's AI news and publish it to Neuz."* The
+   automation runs the model with this tool attached on your cadence.
 
 For reliable tool calls, set the model's function-calling mode to **Native**
 (Workspace → Models → Advanced Params) and use a capable model — small models

@@ -24,7 +24,7 @@ Neuz's only ingest contract is `POST /api/items` (bearer auth, JSON below). Pick
 | Curator | Cadence | Best for |
 |---|---|---|
 | **Claude Routines / Cowork** | scheduled (cron) | hands-off, always-on curation — prompts ship with Neuz (see *How it works*) |
-| **[Open WebUI tool](integrations/openwebui/)** | on-demand, from a chat | a self-hosted model (or Claude) you steer conversationally, then say "publish to Neuz" |
+| **[Open WebUI tool](integrations/openwebui/)** | on-demand **or** scheduled | steer a self-hosted model (or Claude) in a chat and say "publish to Neuz" — or run the same tool unattended on a cron-like schedule via Open WebUI **Automations** |
 | **Your own script** | anything | curl / cron / n8n / a routine in another tool — just POST the JSON shape below |
 
 The rest of this README walks through the Claude Routines path (the turnkey option) and then the API contract every curator targets.
