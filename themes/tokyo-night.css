@@ -1,2 +1,27 @@
-:root { --accent: 0 0 0; }
-html.dark { --accent: 0 0 0; }
+/* tokyo-night — Tokyo Night Day (light) / Tokyo Night (dark). */
+:root {
+  --paper: 225 226 231;
+  --ink: 52 59 88;
+  --faint: 132 140 181;
+  --rule: 196 200 218;
+  --tag: 214 216 224;
+  --accent: 46 125 233;
+  --good: 88 117 57;
+  --bad: 245 42 101;
+  --cell-1: 214 216 224;
+  --cell-2: 170 190 235;
+  --cell-3: 46 125 233;
+}
+html.dark {
+  --paper: 26 27 38;
+  --ink: 192 202 245;
+  --faint: 86 95 137;
+  --rule: 41 46 66;
+  --tag: 22 22 30;
+  --accent: 122 162 247;
+  --good: 158 206 106;
+  --bad: 247 118 142;
+  --cell-1: 41 46 66;
+  --cell-2: 59 72 110;
+  --cell-3: 122 162 247;
+}

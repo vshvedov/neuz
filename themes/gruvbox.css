@@ -1,2 +1,27 @@
-:root { --accent: 0 0 0; }
-html.dark { --accent: 0 0 0; }
+/* gruvbox — Pavel Pertsev's Gruvbox Light / Dark. */
+:root {
+  --paper: 251 241 199;
+  --ink: 60 56 54;
+  --faint: 146 131 116;
+  --rule: 213 196 161;
+  --tag: 235 219 178;
+  --accent: 214 93 14;
+  --good: 121 116 14;
+  --bad: 204 36 29;
+  --cell-1: 235 219 178;
+  --cell-2: 213 196 161;
+  --cell-3: 214 93 14;
+}
+html.dark {
+  --paper: 40 40 40;
+  --ink: 235 219 178;
+  --faint: 146 131 116;
+  --rule: 60 56 54;
+  --tag: 50 48 47;
+  --accent: 254 128 25;
+  --good: 184 187 38;
+  --bad: 251 73 52;
+  --cell-1: 60 56 54;
+  --cell-2: 80 73 69;
+  --cell-3: 254 128 25;
+}

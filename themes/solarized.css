@@ -1,0 +1,27 @@
+/* solarized — Ethan Schoonover's Solarized Light / Dark. */
+:root {
+  --paper: 253 246 227;
+  --ink: 88 110 117;
+  --faint: 147 161 161;
+  --rule: 230 222 201;
+  --tag: 238 232 213;
+  --accent: 38 139 210;
+  --good: 133 153 0;
+  --bad: 220 50 47;
+  --cell-1: 230 222 201;
+  --cell-2: 156 197 194;
+  --cell-3: 38 139 210;
+}
+html.dark {
+  --paper: 0 43 54;
+  --ink: 147 161 161;
+  --faint: 88 110 117;
+  --rule: 10 53 64;
+  --tag: 7 54 66;
+  --accent: 38 139 210;
+  --good: 133 153 0;
+  --bad: 220 50 47;
+  --cell-1: 7 54 66;
+  --cell-2: 26 111 120;
+  --cell-3: 38 139 210;
+}

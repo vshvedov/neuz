@@ -1,0 +1,29 @@
+/* elflord — dark follows Vim's elflord (cyan-blue + violet character).
+   Vim elflord is dark-only; the light variant is an original derivation
+   that preserves the same lavender/violet character. */
+:root {
+  --paper: 244 243 251;
+  --ink: 32 32 58;
+  --faint: 107 107 138;
+  --rule: 220 218 240;
+  --tag: 233 231 247;
+  --accent: 106 74 208;
+  --good: 28 156 92;
+  --bad: 210 59 59;
+  --cell-1: 233 231 247;
+  --cell-2: 200 192 240;
+  --cell-3: 106 74 208;
+}
+html.dark {
+  --paper: 14 14 24;
+  --ink: 204 204 204;
+  --faint: 122 122 154;
+  --rule: 42 42 64;
+  --tag: 28 28 46;
+  --accent: 160 124 255;
+  --good: 0 204 102;
+  --bad: 255 95 95;
+  --cell-1: 42 42 64;
+  --cell-2: 74 64 120;
+  --cell-3: 160 124 255;
+}
