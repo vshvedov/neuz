@@ -71,6 +71,9 @@
 <footer class="mx-auto max-w-prose w-full px-4 sm:px-6 py-10 text-xs text-faint">
   <p class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center">
     <span>Powered by Neuz v<%= Neuz.version %></span>
+    <% if Neuz::UpdateCheck.update_available? %>
+      <a class="underline text-accent" href="<%= Neuz::Config.repo_url %>/releases" target="_blank" rel="noopener noreferrer">[update available]</a>
+    <% end %>
     <span aria-hidden="true">·</span>
     <span>self-hosted</span>
     <span aria-hidden="true">·</span>

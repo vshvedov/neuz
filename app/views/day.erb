@@ -12,7 +12,7 @@
     <%== render(:_empty) %>
   <% else %>
     <ol class="divide-y divide-rule">
-      <% items.each do |item| %><%== render(:_item, locals: { item: item }) %><% end %>
+      <% items.each do |item| %><%== render(:_item, locals: { item: item, tz_offset: tz_offset }) %><% end %>
     </ol>
   <% end %>
 </div>

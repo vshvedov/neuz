@@ -22,16 +22,21 @@
   # (≥1 day gap), show "from <date> · curated <relative>" so the user sees
   # at a glance that the article isn't fresh news but was picked today.
   show_arrival_separately = (arr.utc - pub.utc) > 86_400
+  # Day pages bucket by arrival (created_at) in the user's local time, so the
+  # permalink targets the day that always contains this item, anchored by id.
+  tz = defined?(tz_offset) ? tz_offset : 0
+  local_date = (arr.utc + tz * 60).strftime("%Y-%m-%d")
+  permalink = "/day/#{local_date}#item-#{item[:id]}"
   body_html = nil
   if item[:body] && !item[:body].strip.empty?
     require "kramdown"
     body_html = Kramdown::Document.new(item[:body], auto_ids: false, smart_quotes: %w[apos apos quot quot]).to_html
   end
 %>
-<li class="py-4 sm:py-5 first:pt-0">
+<li id="item-<%= item[:id] %>" class="group py-4 sm:py-5 first:pt-0 scroll-mt-24 target:bg-tag/40 target:rounded-lg target:-mx-2 target:px-2">
   <article class="space-y-2">
     <h2 class="font-serif text-xl sm:text-2xl font-semibold leading-snug">
-      <a href="<%= item[:source_url] %>" target="_blank" rel="noopener noreferrer" class="hover:text-accent underline-offset-2 hover:underline"><%= item[:title] %></a>
+      <a href="<%= item[:source_url] %>" target="_blank" rel="noopener noreferrer" class="hover:text-accent underline-offset-2 hover:underline"><%= item[:title] %></a><a href="<%= permalink %>" class="ml-1.5 align-middle text-base text-faint hover:text-accent opacity-60 group-hover:opacity-100 focus:opacity-100" aria-label="Permalink to this item" title="Copy link to this item">#</a>
     </h2>
     <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-faint">
       <span class="inline-flex items-center gap-1">
