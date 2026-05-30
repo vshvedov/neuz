@@ -1,5 +1,3 @@
-require "fileutils"
-
 module Neuz
   # Loads palette CSS for a named theme. Resolution order: a file in the
   # operator's custom dir (on the data volume) wins over a built-in of the
