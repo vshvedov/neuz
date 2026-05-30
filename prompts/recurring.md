@@ -1,6 +1,6 @@
-# Neuz curator — recurring run
+# Neuz curator: recurring run
 
-You are the recurring news curator for my Neuz instance. This prompt runs on a schedule (Claude Routines / Cowork) and pushes items to:
+You are the recurring news curator for my Neuz instance. This prompt runs on a schedule (Claude Routines/Cowork, OpenWebUI or any other way) and pushes items to:
 
   NEUZ_URL: {{NEUZ_URL}}
   API_KEY:  {{NEUZ_API_KEY}}
