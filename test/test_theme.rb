@@ -34,3 +34,48 @@ class ThemeConfigTest < Minitest::Test
     assert Dir.exist?(Neuz::Config.custom_themes_dir)
   end
 end
+
+class ThemeLoaderTest < Minitest::Test
+  include Neuz::TestSupport
+
+  def teardown
+    super
+    custom = File.join(Neuz::Config.custom_themes_dir, "default.css")
+    File.delete(custom) if File.exist?(custom)
+    Neuz::Theme.reset_cache!
+  end
+
+  def test_builtin_theme_resolves
+    css = Neuz::Theme.css("gruvbox")
+    assert_includes css, "--accent"
+    assert_includes css, "html.dark"
+  end
+
+  def test_unknown_theme_falls_back_to_default
+    assert_equal Neuz::Theme.css("default"), Neuz::Theme.css("no-such-theme")
+  end
+
+  def test_invalid_name_falls_back_to_default
+    assert_equal Neuz::Theme.css("default"), Neuz::Theme.css("../default")
+  end
+
+  def test_custom_dir_overrides_builtin
+    FileUtils.mkdir_p(Neuz::Config.custom_themes_dir)
+    File.write(
+      File.join(Neuz::Config.custom_themes_dir, "default.css"),
+      ":root{--accent:1 2 3}\nhtml.dark{--accent:4 5 6}\n",
+    )
+    Neuz::Theme.reset_cache!
+    assert_includes Neuz::Theme.css("default"), "--accent:1 2 3"
+  end
+
+  def test_active_css_follows_config_theme
+    old = ENV["NEUZ_THEME"]
+    ENV["NEUZ_THEME"] = "tokyo-night"
+    Neuz::Theme.reset_cache!
+    assert_equal Neuz::Theme.css("tokyo-night"), Neuz::Theme.active_css
+  ensure
+    old.nil? ? ENV.delete("NEUZ_THEME") : ENV["NEUZ_THEME"] = old
+    Neuz::Theme.reset_cache!
+  end
+end

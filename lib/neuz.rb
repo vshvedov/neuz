@@ -3,6 +3,7 @@ Encoding.default_internal ||= Encoding::UTF_8
 
 require_relative "neuz/version"
 require_relative "neuz/config"
+require_relative "neuz/theme"
 require_relative "neuz/db"
 require_relative "neuz/validators"
 require_relative "neuz/auth"
@@ -39,6 +40,7 @@ module Neuz
       App::CHIP_CACHE[:data] = []
     end
     UpdateCheck.reset_for_test! if defined?(UpdateCheck)
+    Theme.reset_cache! if defined?(Theme)
   end
 
   def ensure_first_api_key!
