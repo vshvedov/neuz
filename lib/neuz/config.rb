@@ -25,6 +25,19 @@ module Neuz
       File.join(root, "app", "views")
     end
 
+    def themes_dir
+      File.join(root, "themes")
+    end
+
+    def custom_themes_dir
+      File.join(data_dir, "themes")
+    end
+
+    def theme
+      name = ENV["NEUZ_THEME"].to_s.strip.downcase
+      name.match?(/\A[a-z0-9_-]+\z/) ? name : "default"
+    end
+
     def migrations_dir
       File.join(root, "db", "migrations")
     end
@@ -110,6 +123,7 @@ module Neuz
 
     def ensure_data_dir!
       FileUtils.mkdir_p(data_dir, mode: 0o700)
+      FileUtils.mkdir_p(custom_themes_dir, mode: 0o700)
     end
   end
 end
