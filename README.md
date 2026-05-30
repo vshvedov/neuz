@@ -146,6 +146,24 @@ All env vars are optional unless noted. Defaults shown.
 | `NEUZ_WEB_THREADS_MAX`        | `5`             | Puma threads                         |
 | `NEUZ_LOG_MAX_SIZE`           | `10m`           | Docker `json-file` `max-size` per log file (e.g. `1m`, `100k`) |
 | `NEUZ_LOG_MAX_FILE`           | `3`             | How many rotated log files Docker keeps |
+| `NEUZ_THEME`                  | `default`       | Color theme name; see [Theming](#theming) |
+
+## Theming
+
+Neuz ships 8 light/dark theme pairs: `default`, `solarized`, `gruvbox`,
+`catppuccin`, `elflord`, `ayu`, `tokyo-night`, `one-dark`. Pick one with the
+`NEUZ_THEME` env var (default `default`):
+
+```yaml
+# docker-compose.yml
+NEUZ_THEME: tokyo-night
+```
+
+The header's light / auto / dark toggle switches modes within the active theme.
+
+You can also drop your own `*.css` theme into the `neuz-data` volume at
+`/app/data/themes/` (survives upgrades) and select it by name. See
+[`themes/README.md`](themes/README.md) for the variable contract and details.
 
 ## Updating
 
