@@ -7,21 +7,64 @@ services:
     container_name: neuz
     restart: unless-stopped
     ports:
+      # Host port to publish the dashboard on. The app always listens on 9292
+      # inside the container; this only changes the host side of the mapping.
+      # Example: NEUZ_HOST_PORT=8080  ->  reach Neuz at http://your-host:8080
       - "${NEUZ_HOST_PORT:-9292}:9292"
     volumes:
       - neuz-data:/app/data
     environment:
+      # Rack environment. "production" enables request logging and
+      # production-tuned behavior; use "development" only for local hacking.
       RACK_ENV: production
+
+      # Port the app listens on *inside* the container. Leave as-is and remap on
+      # the host with NEUZ_HOST_PORT above.
       PORT: 9292
+
+      # Auto-delete items older than this many days (background prune daemon).
+      # Set to 0 to keep items forever. Example: NEUZ_PRUNE_DAYS=30
       NEUZ_PRUNE_DAYS: ${NEUZ_PRUNE_DAYS:-90}
+
+      # API rate limit — token-bucket capacity, i.e. the largest burst a single
+      # API key may spend at once before refill kicks in. Example: NEUZ_RATE_CAPACITY=120
       NEUZ_RATE_CAPACITY: ${NEUZ_RATE_CAPACITY:-60}
+
+      # API rate limit — tokens refilled per minute (sustained per-key rate).
+      # Example: NEUZ_RATE_REFILL_PER_MIN=120
       NEUZ_RATE_REFILL_PER_MIN: ${NEUZ_RATE_REFILL_PER_MIN:-60}
+
+      # Max items accepted in one POST /api/items batch; larger batches get a
+      # 413 response. Example: NEUZ_BATCH_LIMIT=1000
       NEUZ_BATCH_LIMIT: ${NEUZ_BATCH_LIMIT:-500}
+
+      # SQLite journal mode: "WAL" (default, best concurrency) or "DELETE"
+      # (use on networked storage — NFS/SMB — that mishandles WAL).
       NEUZ_JOURNAL_MODE: ${NEUZ_JOURNAL_MODE:-WAL}
+
+      # Public base URL of this instance, used for absolute/shareable links and
+      # setup output. Empty = derive from the incoming request.
+      # Example: NEUZ_URL=https://news.example.com
       NEUZ_URL: ${NEUZ_URL:-}
+
+      # Brand name shown in the header and the page <title>. Empty = "Neuz".
+      # Example: NEUZ_BRAND=Ada's Briefing
       NEUZ_BRAND: ${NEUZ_BRAND:-}
+
+      # Short tagline shown next to the brand. Empty = no tagline.
+      # Example: NEUZ_TAGLINE=my morning read
       NEUZ_TAGLINE: ${NEUZ_TAGLINE:-}
+
+      # Source URL for the footer link and the "update available" releases link.
+      # Empty = the upstream Neuz repo.
+      # Example: NEUZ_REPO_URL=https://github.com/you/neuz-fork
       NEUZ_REPO_URL: ${NEUZ_REPO_URL:-}
+
+      # Color theme — a light/dark pair. The header toggle still switches
+      # light/auto/dark *within* the chosen theme. Built-in themes:
+      #   default, solarized, gruvbox, catppuccin, elflord, ayu, tokyo-night, one-dark
+      # Custom: drop <name>.css into the neuz-data volume at /app/data/themes/
+      # (survives upgrades) and set NEUZ_THEME=<name>. Example: NEUZ_THEME=gruvbox
       NEUZ_THEME: ${NEUZ_THEME:-default}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9292/healthz"]
@@ -31,12 +74,13 @@ services:
       start_period: 10s
     # Cap container log volume so /var/lib/docker doesn't grow unbounded.
     # Defaults: 3 rotated files × 10 MiB = ~30 MiB max per container.
-    # Tune via NEUZ_LOG_MAX_SIZE (Docker's max-size syntax: "1m","10m","100k")
-    # and NEUZ_LOG_MAX_FILE (integer number of rotated files to keep).
     logging:
       driver: json-file
       options:
+        # Max size of each log file before rotation (Docker's max-size syntax:
+        # "1m", "10m", "100k"). Example: NEUZ_LOG_MAX_SIZE=50m
         max-size: "${NEUZ_LOG_MAX_SIZE:-10m}"
+        # Number of rotated log files to keep. Example: NEUZ_LOG_MAX_FILE=5
         max-file: "${NEUZ_LOG_MAX_FILE:-3}"
 
 volumes:
