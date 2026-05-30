@@ -79,3 +79,15 @@ class ThemeLoaderTest < Minitest::Test
     Neuz::Theme.reset_cache!
   end
 end
+
+class ThemeRouteTest < Minitest::Test
+  include Neuz::TestSupport
+
+  def test_theme_css_is_served
+    get "/theme.css"
+    assert_equal 200, last_response.status
+    assert_includes last_response.headers["Content-Type"], "text/css"
+    assert_includes last_response.body, "--accent"
+    assert_includes last_response.body, "html.dark"
+  end
+end

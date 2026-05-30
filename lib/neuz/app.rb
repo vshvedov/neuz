@@ -47,6 +47,12 @@ module Neuz
 
       r.public
 
+      r.is "theme.css" do
+        response["Content-Type"] = "text/css; charset=utf-8"
+        response["Cache-Control"] = "public, max-age=300"
+        Theme.active_css
+      end
+
       r.on "api" do
         r.is "items" do
           r.post { handle_ingest(r) }
